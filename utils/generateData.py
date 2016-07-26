@@ -63,7 +63,7 @@ def main():
     masterData = { 'hungry': [], 'pete': [] }
 
     # get list of review urls
-    pages = 1
+    pages = 3
     hungryCityUrls = get_review_urls(HUNGRY_CITY_URL, pages)
     restReviewUrls = get_review_urls(RESTAURANT_REVIEW_URL, pages)
 
