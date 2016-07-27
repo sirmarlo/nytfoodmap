@@ -13,6 +13,33 @@
 	<div id="mapid"></div>
 </body>
 
+<script>
+	function sprintf() {
+	    var args = arguments,
+	    string = args[0],
+	    i = 1;
+	    return string.replace(/%((%)|s|d)/g, function (m) {
+	        // m is the matched format, e.g. %s, %d
+	        var val = null;
+	        if (m[2]) {
+	            val = m[2];
+	        } else {
+	            val = args[i];
+	            // A switch statement so that the formatter can be extended. Default is %s
+	            switch (m) {
+	                case '%d':
+	                    val = parseFloat(val);
+	                    if (isNaN(val)) {
+	                        val = 0;
+	                    }
+	                    break;
+	            }
+	            i++;
+	        }
+	        return val;
+	    });
+	}
+</script>
 
 <script>
 	// custom redIcon for hungry city restaurants
@@ -42,13 +69,21 @@
 
     	$.each(data['hungry'], function(key, item){
     		var marker = L.marker([item['latitude'], item['longtitude']], {icon: redIcon});
-    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
+    		marker.bindPopup(sprintf('<div class="popup"><h3>%s</h3><div class="headline"><a href="%s" target="_blank">%s</a></div>' +
+    								 '<div class="address"><b>Address:</b> %s</div>' + 
+    			                     '<div class="cuisine"><b>Cuisine:</b> %s</div><div class="cost"><b>Cost:</b> %s</div>' +
+    			                     '</div>', item['name'], item['url'], item['headline'], item['address'], item['cuisine'], item['price']));
     		hungry.push(marker);
     	});
 
     	$.each(data['pete'], function(key, item){
     		var marker = L.marker([item['latitude'], item['longtitude']]);
-    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
+    		//marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
+    		marker.bindPopup(sprintf('<div class="popup"><h3>%s</h3><div class="headline"><a href="%s" target="_blank">%s</a></div>' + 
+    								 '<div class="address"><b>Address:</b> %s</div>' + 
+    			                     '<div class="cuisine"><b>Cuisine:</b> %s</div><div class="cost"><b>Cost:</b> %s</div>' +
+    			                     '<div class="critic"><b>Critics\' Rating:</b> %s</div>' +
+    			                     '</div>', item['name'], item['url'], item['headline'], item['address'], item['cuisine'], item['price'], item['rating']));
     		petey.push(marker);
     	});
 
