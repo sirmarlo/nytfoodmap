@@ -13,19 +13,64 @@
 	<div id="mapid"></div>
 </body>
 
+
 <script>
-	// -73.9712, 40.7331
-	var mymap = L.map('mapid').setView([40.7331, -73.9712], 13);
-	L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic2lybWFybG8iLCJhIjoiY2lyMmp5Z2IwMDAwMmZubnIxdzZ5bndzdCJ9.8Fsv2uHdhYDiub9pOO0xBA',
-		{
-	    	attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-	    	maxZoom: 18,
-	    	accessToken: 'pk.eyJ1Ijoic2lybWFybG8iLCJhIjoiY2lyMmp5Z2IwMDAwMmZubnIxdzZ5bndzdCJ9.8Fsv2uHdhYDiub9pOO0xBA'
-		}
-	).addTo(mymap);
+	// custom redIcon for hungry city restaurants
+	var redIcon = L.icon({
+	    iconUrl: './assets/images/marker-red.png',
+	    shadowUrl: './assets/images/marker-shadow.png',
+
+	    iconSize:     [25, 41], // size of the icon
+	    shadowSize:   [41, 41], // size of the shadow
+	    iconAnchor:   [8, 25], // point of the icon which will correspond to marker's location
+	    popupAnchor:  [4, -17] // point from which the popup should open relative to the iconAnchor
+	});
+
+	// place restaurants
+	var hungryLayer;
+	var peteyLayer;
+	var overlays;
+	$.ajax({
+		url: './utils/masterData.json',
+		crossDomain: true,
+		dataType: 'json',
+		async: false,
+		//data: 'data',
+	}).success(function(data) {
+		var hungry = [];
+		var petey = [];
+
+    	$.each(data['hungry'], function(key, item){
+    		var marker = L.marker([item['latitude'], item['longtitude']], {icon: redIcon});
+    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
+    		hungry.push(marker);
+    	});
+
+    	$.each(data['pete'], function(key, item){
+    		var marker = L.marker([item['latitude'], item['longtitude']]);
+    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
+    		petey.push(marker);
+    	});
+
+		hungryLayer = L.layerGroup(hungry);
+		peteyLayer = L.layerGroup(petey);
+	});
+
+
+</script>
+
+<script>
+	// load map
+	var dark = 'https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic2lybWFybG8iLCJhIjoiY2lyMmp5Z2IwMDAwMmZubnIxdzZ5bndzdCJ9.8Fsv2uHdhYDiub9pOO0xBA';
+	var streets = 'https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic2lybWFybG8iLCJhIjoiY2lyMmp5Z2IwMDAwMmZubnIxdzZ5bndzdCJ9.8Fsv2uHdhYDiub9pOO0xBA';
+	var attribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>';
+	var accessToken = 'pk.eyJ1Ijoic2lybWFybG8iLCJhIjoiY2lyMmp5Z2IwMDAwMmZubnIxdzZ5bndzdCJ9.8Fsv2uHdhYDiub9pOO0xBA';
+	var darkLayer = L.tileLayer(dark, { attribution: attribution, maxZoom: 18, accessToken: accessToken });
+	var streetsLayer = L.tileLayer(streets, { attribution: attribution, maxZoom: 18, accessToken: accessToken });
+	var map = L.map('mapid', { center: [40.7331, -73.9712], zoom: 13, layers: [darkLayer, hungryLayer, peteyLayer]});
 
 	// add labels
-	var info = L.control({position: 'topright'});
+	var info = L.control({position: 'bottomright'});
 
 	info.onAdd = function (map) {
 		this._div = L.DomUtil.create('div', 'info');
@@ -37,42 +82,12 @@
 		this._div.innerHTML = '<h4>NYTimes Reviewed Restaurants</h4>';
 	};
 
-	info.addTo(mymap);
+	info.addTo(map);
+
+	var baseMaps = { 'Dark': darkLayer, 'Streets': streetsLayer };
+	var overlayMap = { 'Hungry City': hungryLayer, 'Pete Wells': peteyLayer };
+    L.control.layers(baseMaps, overlayMap).addTo(map);
 </script>
 
-<script>
-	var redIcon = L.icon({
-	    iconUrl: './assets/images/marker-red.png',
-	    shadowUrl: './assets/images/marker-shadow.png',
-
-	    iconSize:     [25, 41], // size of the icon
-	    shadowSize:   [41, 41], // size of the shadow
-	    iconAnchor:   [8, 25], // point of the icon which will correspond to marker's location
-	    popupAnchor:  [4, -17] // point from which the popup should open relative to the iconAnchor
-	});
-
-	$.ajax({
-		url: './utils/masterData.json',
-		crossDomain: true,
-		dataType: 'json',
-		//data: 'data',
-	}).success(function(data) {
-    	var hungryItems = data['hungry'];
-    	$.each(hungryItems, function(key, item){
-    		//console.log(item);
-    		//console.log(item['latitude']);
-    		var marker = L.marker([item['latitude'], item['longtitude']], {icon: redIcon}).addTo(mymap);
-    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
-    	});
-
-    	var peteWellsItems = data['pete'];
-    	$.each(peteWellsItems, function(key, item){
-    		//console.log(item);
-    		//console.log(item['latitude']);
-    		var marker = L.marker([item['latitude'], item['longtitude']]).addTo(mymap);
-    		marker.bindPopup(item['name'] + ' - <a href=' + item['url'] + ' target="_blank">Read Review</a>');
-    	});
-	});
-</script>
 
 </html>
